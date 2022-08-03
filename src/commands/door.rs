@@ -1,6 +1,6 @@
 use crate::{errln, infoln, warnln};
-use clap::{AppSettings, Parser, Subcommand, Args};
-use super::utils::common::*;
+use clap::Args;
+use crate::utils::{common::*, print::*};
 use colored::Colorize;
 
 #[derive(Args)]
@@ -20,7 +20,6 @@ const IPSUM: &str =
 
 pub fn process_door(_door: &Door) {
     
-
     infoln!("Opening Door...");
 
     narrate(IPSUM, NarrateSpeed::Fast, 75usize);

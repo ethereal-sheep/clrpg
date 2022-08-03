@@ -1,17 +1,39 @@
+
 use colored::Colorize;
 use std::io::stdout;
 use std::time::Duration;
 use std::thread::sleep;
 use std::io::Write;
 
-pub const ROOT_FOLDER_NAME: &str = ".dungeon";
-pub const CHAR_LIST_NAME: &str = ".dungeon/characters.txt";
+#[macro_export]
+macro_rules! errln {
+    () => {
+        print!("\n")
+    };
+    ($($arg:tt)*) => {{
+        std::io::_print(std::format_args_nl!("{:>8} {}", "Error".red().bold(), std::format_args!($($arg)*)));
+    }};
+}
+
+#[macro_export]
+macro_rules! infoln {
+    ($($arg:tt)*) => {{
+        std::io::_print(std::format_args_nl!("{:>8} {}", "Info".green().bold(), std::format_args!($($arg)*)));
+    }};
+}
+
+#[macro_export]
+macro_rules! warnln {
+    ($($arg:tt)*) => {{
+        std::io::_print(std::format_args_nl!("{:>8} {}", "Warn".yellow().bold(), std::format_args!($($arg)*)));
+    }};
+}
 
 
 pub fn print_logo() {
     
     println!();
-    include_str!("../../../logo.txt").lines().for_each(|l| println!("{}", l));
+    include_str!("../../res/logo.txt").lines().for_each(|l| println!("{}", l));
     println!();
 
 }
@@ -48,3 +70,4 @@ pub fn narrate(s: &str, speed: NarrateSpeed, wrapping_len: usize) {
     });
     print!("\n\n");
 }
+

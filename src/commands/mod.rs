@@ -1,10 +1,10 @@
-mod utils;
 mod door;
 mod init;
 mod clean;
+mod character;
 
 
-use clap::{AppSettings, Parser, Subcommand, Args};
+use clap::Subcommand;
 
 #[derive(Subcommand)]
 pub enum Commands {
@@ -17,8 +17,10 @@ pub enum Commands {
     /// Show the current status
     Status,
 
+    Character(character::Character),
+
     /// Kick open the door and face you foe!
-    Door(door::Door)
+    Door(door::Door),
 }
 
 pub fn process_command(command: &Commands) {
@@ -26,6 +28,7 @@ pub fn process_command(command: &Commands) {
         Commands::Init(init) => init::process_init(&init),
         Commands::Door(door) => door::process_door(&door),
         Commands::Clean(clean) => clean::process_clean(&clean),
+        Commands::Character(character) => character::process_character(&character),
         Commands::Status => ()
     }
 }
