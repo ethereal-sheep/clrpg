@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = { version = "0.4.20", features = ["serde"] }
 clap = { version = "3.2.16", features = ["derive"] }
 colored = "2.0.0"
 indicatif = "0.17.0"
@@ -13,3 +14,5 @@ rand = { version = "0.8.5", features = ["serde"] }
 rand_pcg = { version = "0.3.1", features = ["serde1"] }
 serde = { version = "1.0.142", features = ["derive"] }
 serde_json = "1.0.83"
+strum = { version = "0.24.1", features = ["derive"] }
+tabled = { version = "0.8.0", features = ["color"] }
