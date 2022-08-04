@@ -92,7 +92,7 @@ fn create_new(new: &New) -> Result<(), String> {
     Ok(())
 }
 
-fn process_new(new: &New) {
+pub fn process_new(new: &New) {
     
     match create_new(new) {
         Ok(_) => {
@@ -155,7 +155,7 @@ fn list_characters(list: &List) -> Result<(), String> {
 
 }
 
-fn process_list(list: &List) {
+pub fn process_list(list: &List) {
 
     match list_characters(list) {
         Ok(_) => {

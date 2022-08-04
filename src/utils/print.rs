@@ -1,4 +1,5 @@
 
+use clap::ArgEnum;
 use colored::Colorize;
 use std::io::stdout;
 use std::time::Duration;
@@ -38,6 +39,7 @@ pub fn print_logo() {
 
 }
 
+#[derive(Debug, Clone, ArgEnum)]
 pub enum NarrateSpeed {
     Slow,
     Fast,

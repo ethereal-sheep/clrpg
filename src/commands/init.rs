@@ -1,8 +1,8 @@
 use crate::{errln, warnln, infoln};
 use crate::utils::common::*;
 
-use std::fs::{create_dir, remove_dir_all, File};
-use std::path::Path;
+use std::fs::{remove_dir_all};
+
 use clap::Args;
 use colored::Colorize;
 

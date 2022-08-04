@@ -1,21 +1,9 @@
 use crate::{errln, infoln};
 use crate::utils::common::*;
 
-use std::fs::{remove_dir_all};
-use std::path::Path;
-use clap::Args;
 use colored::Colorize;
 
-#[derive(Args)]
-pub struct Clean {
-    /// Say yes
-    #[clap(short, long, action)]
-    yes: bool,
-}
-
-
-
-pub fn process_clean(_clean: &Clean) {
+pub fn process_clean() {
     
     infoln!("Cleaning...");
 

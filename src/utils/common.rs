@@ -2,7 +2,7 @@ use std::{path::Path, fs::{write, create_dir, remove_dir_all, read_to_string}, c
 use colored::Colorize;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
-use strum::Display;
+
 use tabled::Tabled;
 
 pub const ROOT_FOLDER_NAME: &str = ".dungeon";
