@@ -456,7 +456,7 @@ Rattlesnake
 RedKneeTarantula
 RedPanda
 RedWolf
-Red-handedTamarin
+RedHandedTamarin
 Reindeer
 Rhinoceros
 RiverDolphin
@@ -468,7 +468,7 @@ RoseateSpoonbill
 Rottweiler
 RoyalPenguin
 RussianBlue
-Sabre-ToothedTiger
+SabreToothedTiger
 SaintBernard
 Salamander
 SandLizard
@@ -524,13 +524,13 @@ Stingray
 Stoat
 StripedRocketFrog
 SumatranElephant
-SumatranOrang-utan
+SumatranOrangutan
 SumatranRhinoceros
 SumatranTiger
 SunBear
 Swan
 Tang
-TapanuliOrang-utan
+TapanuliOrangutan
 Tapir
 Tarsier
 TasmanianDevil
@@ -585,7 +585,7 @@ WoollyMonkey
 Wrasse
 X-RayTetra
 Yak
-Yellow-EyedPenguin
+YellowEyedPenguin
 YorkshireTerrier
 Zebra
 ZebraShark

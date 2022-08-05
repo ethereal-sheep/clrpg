@@ -72,7 +72,7 @@ impl RandomState {
         // just randomly select 8 bytes of our alphabet and return
         // can be decoded to find a seed that produces the same result
         // but who cares 🤷
-        const ALPHABET: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        const ALPHABET: &str = "abcdefghijklmnopqrstuvwxyz01234567890123456789";
         const ID_SIZE: usize = 8;
 
         let mut ret = String::with_capacity(ID_SIZE);

@@ -56,7 +56,7 @@ Bizarre
 Black
 Bloody
 Blue
-Blue-eyed
+BlueEyed
 Blushing
 Boiling
 Boorish
@@ -377,7 +377,7 @@ Oceanic
 Odd
 Offbeat
 Old
-Old-fashioned
+OldFashioned
 Onerous
 Open
 Optimal
@@ -583,7 +583,7 @@ Wet
 Whole
 Wicked
 Wide
-Wide-eyed
+WideEyed
 Wild
 Windy
 Wiry

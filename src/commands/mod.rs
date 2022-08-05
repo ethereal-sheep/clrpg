@@ -16,8 +16,12 @@ pub enum Commands {
     /// Clean current game
     Clean,
 
-    /// List all characters
+    /// Alias for character list
     List(character::List),
+
+    
+    /// Alias for character new
+    Nc(character::New),
 
     /// Show the current status
     Status,
@@ -37,6 +41,7 @@ pub fn process_command(command: &Commands) {
         Commands::Init(init) => init::process_init(&init),
         Commands::Door(door) => door::process_door(&door),
         Commands::List(list) => character::process_list(&list),
+        Commands::Nc(new) => character::process_new(&new),
         Commands::Clean => clean::process_clean(),
         Commands::Character(character) => character::process_character(&character),
         Commands::Logo => print_logo(),
