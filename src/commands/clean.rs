@@ -19,5 +19,5 @@ pub fn process_clean() {
         Err(err) => errln!("{}", err)
     }
     
-
+    println!("{}", "The dungeon has mysteriously vanished.");
 }

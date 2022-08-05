@@ -18,6 +18,10 @@ use clap::{AppSettings, Parser};
 struct Cli {
     #[clap(subcommand)]
     command: commands::Commands,
+    
+    /// Verbose debug information
+    #[clap(short, long, action)]
+    verbose: bool
 
 }
 
@@ -25,6 +29,9 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
+
+    // use crate::utils::print::VERBOSE;
+    // VERBOSE.with(|b| *b.borrow_mut() = cli.verbose);
 
     commands::process_command(&cli.command);
 }

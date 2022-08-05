@@ -38,30 +38,10 @@ pub struct Character {
 }
 
 
-fn create_new(new: &New) -> Result<(), String> {
+fn create_new(new: &New) -> Result<String, String> {
     
-    if !check_root()? {
-        return Err(
-            format!(
-                "Missing {}! Please run command: [ {} {} ]", 
-                ROOT_FOLDER_NAME, 
-                "clrpg".yellow(), 
-                "init".black()
-            )
-        );
-    }
-
-    if !check_char()? {
-        return Err(
-            format!(
-                "Missing {}! Please run command: [ {} {} {} ]", 
-                CHAR_FOLDER_NAME, 
-                "clrpg".yellow(), 
-                "init".black(),
-                "--force".black()
-            )
-        );
-    }
+    require_root()?;
+    require_char()?;
 
     let mut state = match RandomState::single_use() {
         Ok(s) => s,
@@ -69,7 +49,6 @@ fn create_new(new: &New) -> Result<(), String> {
             format!("Error generating random state: {}", err.to_string())
         )
     };
-
     
     let name = match &new.name {
         Some(s) => s.clone(),
@@ -89,42 +68,21 @@ fn create_new(new: &New) -> Result<(), String> {
 
     create_character(id.clone(), name.clone())?;
     infoln!("Created {}", name.yellow().bold());
-    Ok(())
+    Ok(name)
 }
 
 pub fn process_new(new: &New) {
     
     match create_new(new) {
-        Ok(_) => {
-            
-        },
-        Err(err) => errln!("{}", err)
+        Ok(s) => println!("The adventurer {} walks into the tavern.", s.bold()),
+        Err(err) => println!("{}", err.red())
     }
 }
 
-fn list_characters(list: &List) -> Result<(), String> {
-    if !check_root()? {
-        return Err(
-            format!(
-                "Missing {}! Please run command: [ {} {} ]", 
-                ROOT_FOLDER_NAME, 
-                "clrpg".yellow(), 
-                "init".black()
-            )
-        );
-    }
-
-    if !check_char()? {
-        return Err(
-            format!(
-                "Missing {}! Please run command: [ {} {} {} ]", 
-                CHAR_FOLDER_NAME, 
-                "clrpg".yellow(), 
-                "init".black(),
-                "--force".black()
-            )
-        );
-    }
+fn list_characters(list: &List) -> Result<String, String> {
+    
+    require_root()?;
+    require_char()?;
 
 
     let chars = load_characters();
@@ -137,7 +95,7 @@ fn list_characters(list: &List) -> Result<(), String> {
         .with(Disable::Column(if list.all {4..} else {3..}))
         .with(style)
         .with(
-            Margin::new(2, 0, 1, 1)
+            Margin::new(0, 0, 1, 1)
                 .set_fill(' ', ' ', ' ', ' ')
         )
         .with(Modify::new(Rows::first()).with(str::to_uppercase))
@@ -148,19 +106,15 @@ fn list_characters(list: &List) -> Result<(), String> {
         )
 
         .to_string();
-
-    println!("{}", table);
     
-    Ok(())
+    Ok(table)
 
 }
 
 pub fn process_list(list: &List) {
 
     match list_characters(list) {
-        Ok(_) => {
-            
-        },
+        Ok(s) => println!("{}", s),
         Err(err) => errln!("{}", err)
     }
 

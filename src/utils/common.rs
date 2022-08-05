@@ -1,6 +1,6 @@
 use std::{path::Path, fs::{write, create_dir, remove_dir_all, read_to_string}, cell::RefCell};
 use colored::Colorize;
-use rand::prelude::*;
+use rand::{prelude::*};
 use serde::{Deserialize, Serialize};
 
 use tabled::Tabled;
@@ -8,25 +8,106 @@ use tabled::Tabled;
 pub const ROOT_FOLDER_NAME: &str = ".dungeon";
 pub const CHAR_FOLDER_NAME: &str = ".dungeon/.characters";
 pub const RAND_FILE_NAME: &str = ".dungeon/.rand";
+pub const META_FILE_NAME: &str = ".dungeon/.meta";
+
+/// Checks if the path exists
+pub fn check_dir<T>(path: &T) -> Result<bool, String>
+where 
+    T: AsRef<std::ffi::OsStr> + std::fmt::Display + ?Sized {
+    match Path::new(path).try_exists() {
+        Err(_) => Err(format!("Unable to determine existence of {}", path)),
+        Ok(t) => Ok(t)
+    }
+}
+
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Meta {
+    pub seed: u64,
+    
+}
+
+/// Checks if meta file exists
+pub fn check_meta() -> Result<bool, String> {
+    check_dir(META_FILE_NAME)
+}
+
+pub fn require_meta() -> Result<(), String> {
+    if !check_meta()? {
+        crate::errln!(
+            "Missing {}!", 
+            META_FILE_NAME
+        );
+
+        return Err(
+            format!(
+                "The dungeon is corrupted! {}{} {} {}{}", 
+                "(use \"".white(),
+                "clrpg".yellow(), 
+                "init".black(),
+                "--force".black(),
+                "\" to create a new dungeon)".white()
+            )
+        );
+    }
+    Ok(())
+}
+
+pub fn create_meta(meta: Meta) -> Result<(), String> {
+    write_meta(&meta)
+}
+
+pub fn write_meta(meta: &Meta) -> Result<(), String> {
+    let json = match serde_json::to_string_pretty(meta) {
+        Err(err) => {
+            return Err(err.to_string());
+        },
+        Ok(s) => s
+    };
+
+    match write(META_FILE_NAME, &json.as_bytes()) {
+        Err(_) => Err(format!("Unable to write to {}", META_FILE_NAME)),
+        _ => Ok(())
+    }
+}
+
+pub fn load_meta() -> Result<Meta, String> {
+    match read_to_string(META_FILE_NAME) {
+        Ok(json) => {
+            match serde_json::from_str(&json) {
+                Ok(meta) => {
+                    Ok(meta)
+                },
+                Err(err) => Err(err.to_string()),
+            }
+        },
+        Err(err) => Err(err.to_string()),
+    }
+}
+
 
 
 thread_local!(static ACTIVE: RefCell<bool> = RefCell::new(false));
 
-pub type Rng = rand_pcg::Pcg64Mcg;
+pub type Prng = rand_pcg::Pcg64Mcg;
 pub struct RandomState {
-    pub rng: Rng,
+    pub rng: Prng,
 }
 
-pub fn create_rand(seed: Option<u64>) -> Result<(), String> {
+pub fn create_rand(seed: Option<u64>) -> Result<u64, String> {
     if let Some(s) = seed {
-        write_rand(&Rng::seed_from_u64(s))
+        write_rand(&Prng::seed_from_u64(s))?;
+        Ok(s)
     } else {
-        write_rand(&Rng::from_entropy())
+        let s: u64 = thread_rng().gen();
+        write_rand(&Prng::seed_from_u64(s))?;
+        Ok(s)
     }
 }
 
-pub fn write_rand(rng: &Rng) -> Result<(), String> {
-    let json = match serde_json::to_string(rng) {
+pub fn write_rand(rng: &Prng) -> Result<(), String> {
+    let json = match serde_json::to_string_pretty(rng) {
         Err(err) => {
             return Err(err.to_string());
         },
@@ -72,7 +153,7 @@ impl RandomState {
         // just randomly select 8 bytes of our alphabet and return
         // can be decoded to find a seed that produces the same result
         // but who cares 🤷
-        const ALPHABET: &str = "abcdefghijklmnopqrstuvwxyz01234567890123456789";
+        const ALPHABET: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
         const ID_SIZE: usize = 8;
 
         let mut ret = String::with_capacity(ID_SIZE);
@@ -119,30 +200,6 @@ impl Drop for RandomState {
 }
 
 
-/// Checks if the path exists
-pub fn check_dir<T>(path: &T) -> Result<bool, String>
-where 
-    T: AsRef<std::ffi::OsStr> + std::fmt::Display + ?Sized {
-    match Path::new(path).try_exists() {
-        Err(_) => Err(format!("Unable to determine existence of {}", path)),
-        Ok(t) => Ok(t)
-    }
-}
-
-/// Checks if root folder exists
-pub fn check_root() -> Result<bool, String> {
-    check_dir(ROOT_FOLDER_NAME)
-}
-
-/// Checks if character folder exists
-pub fn check_char() -> Result<bool, String> {
-    check_dir(CHAR_FOLDER_NAME)
-}
-
-/// Checks if character file exists
-pub fn check_character(name: &str) -> Result<bool, String> {
-    check_dir(&format!("{}/{}", CHAR_FOLDER_NAME, name))
-}
 
 pub fn create_root() -> Result<(), String> {
 
@@ -154,6 +211,34 @@ pub fn create_root() -> Result<(), String> {
     }
 }
 
+/// Checks if root folder exists
+pub fn check_root() -> Result<bool, String> {
+    check_dir(ROOT_FOLDER_NAME)
+}
+
+pub fn require_root() -> Result<(), String> {
+    if !check_root()? {
+        crate::errln!(
+            "Missing {}! Please run command: [ {} {} ]", 
+            ROOT_FOLDER_NAME, 
+            "clrpg".yellow(), 
+            "init".black()
+        );
+
+        return Err(
+            format!(
+                "There is no dungeon! {}{} {}{}", 
+                "(use \"".white(),
+                "clrpg".yellow(), 
+                "init".black(),
+                "\" to create the dungeon)".white()
+            )
+        );
+    }
+    Ok(())
+}
+
+
 pub fn create_char() -> Result<(), String> {
 
     match create_dir(CHAR_FOLDER_NAME) {
@@ -163,6 +248,63 @@ pub fn create_char() -> Result<(), String> {
         }
     }
 }
+
+/// Checks if character folder exists
+pub fn check_char() -> Result<bool, String> {
+    check_dir(CHAR_FOLDER_NAME)
+}
+
+pub fn require_char() -> Result<(), String> {
+    if !check_char()? {
+
+        crate::errln!(
+            "Missing {}!", 
+            CHAR_FOLDER_NAME
+        );
+
+        require_meta()?;
+        // check if meta is valid
+        match load_meta() {
+            Ok(_) => {
+                return Err(
+                    format!(
+                        "The dungeon is corrupted!\n   {}{} {}{}\n   {}{} {} {}{}", 
+                        "(use \"".white(),
+                        "clrpg".yellow(), 
+                        "reset".black(),
+                        "\" to create a new dungeon with the current seed); or".white(),
+                        "(use \"".white(),
+                        "clrpg".yellow(), 
+                        "init".black(),
+                        "--force".black(),
+                        "\" to create a new dungeon)".white()
+                    )
+                );
+            },
+            Err(err) => {
+                crate::errln!("{}", err);
+                return Err(
+                    format!(
+                        "The dungeon is corrupted! {}{} {} {}{}",
+                        "(use \"".white(),
+                        "clrpg".yellow(), 
+                        "init".black(),
+                        "--force".black(),
+                        "\" to create a new dungeon)".white()
+                    )
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Checks if character file exists
+pub fn check_character(name: &str) -> Result<bool, String> {
+    check_dir(&format!("{}/{}", CHAR_FOLDER_NAME, name))
+}
+
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum CharacterStatus {
     Alive,
@@ -198,7 +340,7 @@ pub fn create_character(id: String, name: String) -> Result<(), String> {
 }
 
 pub fn write_character(char: &CharacterObj) -> Result<(), String> {
-    let json = match serde_json::to_string(char) {
+    let json = match serde_json::to_string_pretty(char) {
         Err(err) => {
             return Err(err.to_string());
         },

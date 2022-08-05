@@ -14,8 +14,6 @@ pub struct Init {
 
     #[clap(short, long, value_parser)]
     seed: Option<u64>,
-    // #[clap(short, long, value_parser)]
-    // character_name: Option<String>,
 }
 
 
@@ -38,8 +36,12 @@ fn create(init: &Init) -> Result<(), String> {
     create_char()?;
     infoln!("Created {}", CHAR_FOLDER_NAME);
 
-    create_rand(init.seed)?;
+    let seed = create_rand(init.seed)?;
     infoln!("Created {}", RAND_FILE_NAME);
+
+    create_meta(Meta { seed })?;
+    infoln!("Created {}", META_FILE_NAME);
+
 
     Ok(())
 }
@@ -52,9 +54,12 @@ pub fn process_init(init: &Init) {
     
     match create(&init) {
         Ok(_) => {
-            
+            println!("{}", "A dungeon has appeared!");
         },
-        Err(err) => errln!("{}", err)
+        Err(err) => {
+            errln!("{}", err);
+            println!("{}", "Failed to create the dungeon.".red());
+        }
     }
 
 }

@@ -1,10 +1,13 @@
 
 use clap::ArgEnum;
 use colored::Colorize;
+use std::cell::RefCell;
 use std::io::stdout;
 use std::time::Duration;
 use std::thread::sleep;
 use std::io::Write;
+
+thread_local! { pub static VERBOSE: RefCell<bool> = RefCell::new(true); }
 
 #[macro_export]
 macro_rules! errln {
@@ -12,21 +15,36 @@ macro_rules! errln {
         print!("\n")
     };
     ($($arg:tt)*) => {{
-        std::io::_print(std::format_args_nl!("{:>8} {}", "Error".red().bold(), std::format_args!($($arg)*)));
+        crate::utils::print::VERBOSE.with(|b| {
+            let inner = b.borrow_mut();
+            if *inner {
+                std::io::_print(std::format_args_nl!("{:>8} {}", "Error".red().bold(), std::format_args!($($arg)*)));
+            }
+        });
     }};
 }
 
 #[macro_export]
 macro_rules! infoln {
     ($($arg:tt)*) => {{
-        std::io::_print(std::format_args_nl!("{:>8} {}", "Info".green().bold(), std::format_args!($($arg)*)));
+        crate::utils::print::VERBOSE.with(|b| {
+            let inner = b.borrow_mut();
+            if *inner {
+                std::io::_print(std::format_args_nl!("{:>8} {}", "Info".green().bold(), std::format_args!($($arg)*)));
+            }
+        });
     }};
 }
 
 #[macro_export]
 macro_rules! warnln {
     ($($arg:tt)*) => {{
-        std::io::_print(std::format_args_nl!("{:>8} {}", "Warn".yellow().bold(), std::format_args!($($arg)*)));
+        crate::utils::print::VERBOSE.with(|b| {
+            let inner = b.borrow_mut();
+            if *inner {
+                std::io::_print(std::format_args_nl!("{:>8} {}", "Warn".yellow().bold(), std::format_args!($($arg)*)));
+            }
+        });
     }};
 }
 

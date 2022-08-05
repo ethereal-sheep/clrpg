@@ -5,8 +5,9 @@ mod character;
 
 
 use clap::Subcommand;
+use colored::Colorize;
 
-use crate::utils::print::print_logo;
+use crate::{utils::print::print_logo, infoln};
 
 #[derive(Subcommand)]
 pub enum Commands {
@@ -37,6 +38,7 @@ pub enum Commands {
 }
 
 pub fn process_command(command: &Commands) {
+    infoln!("{}", "Running clrpg...");
     match command {
         Commands::Init(init) => init::process_init(&init),
         Commands::Door(door) => door::process_door(&door),
