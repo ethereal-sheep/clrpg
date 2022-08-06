@@ -28,10 +28,10 @@ struct Cli {
 
 
 fn main() {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
 
     // use crate::utils::print::VERBOSE;
     // VERBOSE.with(|b| *b.borrow_mut() = cli.verbose);
 
-    commands::process_command(&cli.command);
+    commands::process_command(&mut cli.command);
 }

@@ -37,10 +37,10 @@ pub enum Commands {
     Logo,
 }
 
-pub fn process_command(command: &Commands) {
+pub fn process_command(command: &mut Commands) {
     infoln!("{}", "Running clrpg...");
     match command {
-        Commands::Init(init) => init::process_init(&init),
+        Commands::Init(init) => init::process_init(init),
         Commands::Door(door) => door::process_door(&door),
         Commands::List(list) => character::process_list(&list),
         Commands::Nc(new) => character::process_new(&new),

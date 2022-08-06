@@ -73,9 +73,16 @@ fn create_new(new: &New) -> Result<String, String> {
 
 pub fn process_new(new: &New) {
     
+    infoln!("Creating new character...");
     match create_new(new) {
-        Ok(s) => println!("The adventurer {} walks into the tavern.", s.bold()),
-        Err(err) => println!("{}", err.red())
+        Ok(s) => {
+            infoln!("{}", "Create character succeeded.");
+            println!("The adventurer {} walks into the tavern.", s.bold());
+        },
+        Err(err) => {
+            errln!("{}", "Create character failed.");
+            println!("{}", err.red());
+        }
     }
 }
 
@@ -113,9 +120,16 @@ fn list_characters(list: &List) -> Result<String, String> {
 
 pub fn process_list(list: &List) {
 
+    infoln!("Listing characters...");
     match list_characters(list) {
-        Ok(s) => println!("{}", s),
-        Err(err) => errln!("{}", err)
+        Ok(s) => {
+            infoln!("{}", "List characters succeeded.");
+            println!("{}", s);
+        },
+        Err(err) => {
+            errln!("{}", err);
+            errln!("{}", "List characters failed.");
+        }
     }
 
 }

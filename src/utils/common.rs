@@ -15,7 +15,12 @@ pub fn check_dir<T>(path: &T) -> Result<bool, String>
 where 
     T: AsRef<std::ffi::OsStr> + std::fmt::Display + ?Sized {
     match Path::new(path).try_exists() {
-        Err(_) => Err(format!("Unable to determine existence of {}", path)),
+        Err(err) => Err(
+            format!(
+                "Unable to determine existence of {}: {}", 
+                path, err.to_string()
+            )
+        ),
         Ok(t) => Ok(t)
     }
 }
@@ -29,29 +34,8 @@ pub struct Meta {
 }
 
 /// Checks if meta file exists
-pub fn check_meta() -> Result<bool, String> {
+pub fn _check_meta() -> Result<bool, String> {
     check_dir(META_FILE_NAME)
-}
-
-pub fn require_meta() -> Result<(), String> {
-    if !check_meta()? {
-        crate::errln!(
-            "Missing {}!", 
-            META_FILE_NAME
-        );
-
-        return Err(
-            format!(
-                "The dungeon is corrupted! {}{} {} {}{}", 
-                "(use \"".white(),
-                "clrpg".yellow(), 
-                "init".black(),
-                "--force".black(),
-                "\" to create a new dungeon)".white()
-            )
-        );
-    }
-    Ok(())
 }
 
 pub fn create_meta(meta: Meta) -> Result<(), String> {
@@ -59,30 +43,80 @@ pub fn create_meta(meta: Meta) -> Result<(), String> {
 }
 
 pub fn write_meta(meta: &Meta) -> Result<(), String> {
-    let json = match serde_json::to_string_pretty(meta) {
-        Err(err) => {
-            return Err(err.to_string());
-        },
-        Ok(s) => s
-    };
+    let json = serde_json::to_string_pretty(meta).unwrap();
 
     match write(META_FILE_NAME, &json.as_bytes()) {
-        Err(_) => Err(format!("Unable to write to {}", META_FILE_NAME)),
+        Err(err) => Err(
+            format!(
+                "Unable to write to {}: {}", 
+                META_FILE_NAME, err.to_string()
+            )
+        ),
         _ => Ok(())
     }
 }
 
-pub fn load_meta() -> Result<Meta, String> {
+pub fn require_meta() -> Result<Meta, String> {
     match read_to_string(META_FILE_NAME) {
         Ok(json) => {
             match serde_json::from_str(&json) {
                 Ok(meta) => {
                     Ok(meta)
                 },
-                Err(err) => Err(err.to_string()),
+                Err(err) => {
+                    crate::errln!(
+                        "{} is corrupted: {}", 
+                        META_FILE_NAME, err.to_string()
+                    );
+                    return Err(
+                        format!(
+                            "The dungeon is corrupted! {}{} {} {}{}", 
+                            "(use \"".white(),
+                            "clrpg".yellow(), 
+                            "init".black(),
+                            "--force".black(),
+                            "\" to create a new dungeon)".white()
+                        )
+                    );
+
+                },
             }
         },
-        Err(err) => Err(err.to_string()),
+        Err(err) => {
+            match err.kind() {
+                std::io::ErrorKind::NotFound => {
+                    crate::errln!(
+                        "Required {} is missing!", 
+                        META_FILE_NAME
+                    );
+
+                    return Err(
+                        format!(
+                            "The dungeon is corrupted! {}{} {} {}{}", 
+                            "(use \"".white(),
+                            "clrpg".yellow(), 
+                            "init".black(),
+                            "--force".black(),
+                            "\" to create a new dungeon)".white()
+                        )
+                    );
+                },
+                _ => {
+
+                    crate::errln!(
+                        "Unable to read from {}: {}", 
+                        META_FILE_NAME, err.to_string()
+                    );
+
+                    return Err(
+                        format!(
+                            "{}", 
+                            "Unexpected error occured."
+                        )
+                    );
+                }
+            }
+        },
     }
 }
 
@@ -107,15 +141,14 @@ pub fn create_rand(seed: Option<u64>) -> Result<u64, String> {
 }
 
 pub fn write_rand(rng: &Prng) -> Result<(), String> {
-    let json = match serde_json::to_string_pretty(rng) {
-        Err(err) => {
-            return Err(err.to_string());
-        },
-        Ok(s) => s
-    };
-
+    let json = serde_json::to_string_pretty(rng).unwrap();
     match write(RAND_FILE_NAME, &json.as_bytes()) {
-        Err(_) => Err(format!("Unable to write to {}", RAND_FILE_NAME)),
+        Err(err) => Err(
+            format!(
+                "Unable to write to {}: {}", 
+                RAND_FILE_NAME, err.to_string()
+            )
+        ),
         _ => Ok(())
     }
 }
@@ -204,7 +237,12 @@ impl Drop for RandomState {
 pub fn create_root() -> Result<(), String> {
 
     match create_dir(ROOT_FOLDER_NAME) {
-        Err(_) => Err(format!("Unable to create {}", ROOT_FOLDER_NAME)),
+        Err(err) => Err(
+            format!(
+                "Unable to create {}: {}", 
+                ROOT_FOLDER_NAME, err.to_string()
+            )
+        ),
         Ok(_) => {
             Ok(())
         }
@@ -242,7 +280,12 @@ pub fn require_root() -> Result<(), String> {
 pub fn create_char() -> Result<(), String> {
 
     match create_dir(CHAR_FOLDER_NAME) {
-        Err(_) => Err(format!("Unable to create {}", CHAR_FOLDER_NAME)),
+        Err(err) => Err(
+            format!(
+                "Unable to create {}: {}", 
+                CHAR_FOLDER_NAME, err.to_string()
+            )
+        ),
         Ok(_) => {
             Ok(())
         }
@@ -258,13 +301,12 @@ pub fn require_char() -> Result<(), String> {
     if !check_char()? {
 
         crate::errln!(
-            "Missing {}!", 
+            "Required file {} is missing!", 
             CHAR_FOLDER_NAME
         );
 
-        require_meta()?;
         // check if meta is valid
-        match load_meta() {
+        match require_meta() {
             Ok(_) => {
                 return Err(
                     format!(
@@ -340,13 +382,7 @@ pub fn create_character(id: String, name: String) -> Result<(), String> {
 }
 
 pub fn write_character(char: &CharacterObj) -> Result<(), String> {
-    let json = match serde_json::to_string_pretty(char) {
-        Err(err) => {
-            return Err(err.to_string());
-        },
-        Ok(s) => s
-    };
-
+    let json = serde_json::to_string_pretty(char).unwrap();
     let path = &format!("{}/{}", CHAR_FOLDER_NAME, char.name);
 
     match write(path, &json.as_bytes()) {
@@ -361,11 +397,23 @@ pub fn load_character(path: &Path) -> Result<CharacterObj, String> {
     match read_to_string(path) {
         Ok(json) => {
             match serde_json::from_str(&json) {
-                Ok(obj) => Ok(obj),
-                Err(err) => Err(err.to_string()),
+                Ok(meta) => {
+                    Ok(meta)
+                },
+                Err(err) => Err(
+                    format!(
+                        "{:?} is corrupted: {}", 
+                        path, err.to_string()
+                    )
+                ),
             }
         },
-        Err(err) => Err(err.to_string()),
+        Err(err) => Err(
+            format!(
+                "Unable to read from {:?}: {}", 
+                path, err.to_string()
+            )
+        ),
     }
 }
 

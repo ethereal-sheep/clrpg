@@ -8,11 +8,16 @@ use colored::Colorize;
 
 #[derive(Args)]
 pub struct Init {
-    /// Remove any existing dungeon before initialization.
+    /// Force the removal of an existing dungeon before creation.
     #[clap(short, long, action)]
     force: bool,
+    
+    /// Reset the dungeon (deletes history, characters)
+    #[clap(short, long, action)]
+    reset: bool,
 
-    #[clap(short, long, value_parser)]
+    /// Seed the dungeon with the given seed (as u64)
+    #[clap(short, long, value_parser, conflicts_with("reset"))]
     seed: Option<u64>,
 }
 
@@ -20,7 +25,7 @@ pub struct Init {
 fn create(init: &Init) -> Result<(), String> {
 
     if check_root()? { // found existing
-        if init.force { // --force flag set
+        if init.force || init.reset { // --force or --reset flag set 
             warnln!("Found existing {0}. Cleaning...", ROOT_FOLDER_NAME);
             remove_dir_all(ROOT_FOLDER_NAME).unwrap();
             warnln!("Deleted {}", ROOT_FOLDER_NAME);
@@ -37,6 +42,7 @@ fn create(init: &Init) -> Result<(), String> {
     infoln!("Created {}", CHAR_FOLDER_NAME);
 
     let seed = create_rand(init.seed)?;
+    infoln!("Seeding dungeon with seed={}", seed);
     infoln!("Created {}", RAND_FILE_NAME);
 
     create_meta(Meta { seed })?;
@@ -47,19 +53,55 @@ fn create(init: &Init) -> Result<(), String> {
 }
 
 
-pub fn process_init(init: &Init) {
-    
-    //print_logo();    
-    infoln!("Initializing...");
-    
+pub fn reset(init: &mut Init) -> Result<(), String> {
+    require_root()?;
+    let meta = require_meta()?;
+
+    infoln!("Found current seed={}", meta.seed);
+    init.seed = Some(meta.seed);
+
     match create(&init) {
-        Ok(_) => {
-            println!("{}", "A dungeon has appeared!");
-        },
+        Ok(_) => (),
         Err(err) => {
             errln!("{}", err);
-            println!("{}", "Failed to create the dungeon.".red());
+            return Err(format!("{}", "Failed to reset the dungeon."));
         }
     }
+
+    Ok(())
+}
+
+pub fn process_init(init: &mut Init) {
+    
+    //print_logo();    
+    
+    if init.reset {
+        infoln!("Resetting...");
+        match reset(init) {
+            Ok(_) => {
+                infoln!("{}", "Reset succeeded.");
+                println!("{}", "The dungeon seems to have reverted to its original state!");
+            },
+            Err(err) => {
+                errln!("{}", "Reset failed.");
+                println!("{}", err.red());
+            }
+        }
+    } else {
+        infoln!("Initializing...");
+        match create(&init) {
+            Ok(_) => {
+                infoln!("{}", "Init succeeded.");
+                println!("{}", "A dungeon has appeared!");
+            },
+            Err(err) => {
+                errln!("{}", err);
+                errln!("{}", "Init failed.");
+                println!("{}", "Failed to create the dungeon.".red());
+            }
+        }
+    }
+
+    
 
 }
