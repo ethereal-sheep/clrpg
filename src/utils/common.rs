@@ -627,7 +627,7 @@ pub struct CharacterStats {
 
 impl CharacterStats {
     pub fn from_rng(rng: &mut RandomState) -> CharacterStats {
-        let mut c = CharacterStats {
+        let c = CharacterStats {
             health: HealthStat::new(100),
             power: RegStat::new(rng.rng.gen_range(1..20)),
             block: RegStat::new(rng.rng.gen_range(1..20)),
@@ -636,19 +636,19 @@ impl CharacterStats {
             speed: RegStat::new(rng.rng.gen_range(1..20))
         };
 
-        c.power.temp.push((2, 1));
+        // c.power.temp.push((2, 1));
 
-        c.magic.temp.push((-2, 1));
+        // c.magic.temp.push((-2, 1));
 
-        c.faith.temp.push((1, 1));
-        c.faith.temp.push((-1, 1));
+        // c.faith.temp.push((1, 1));
+        // c.faith.temp.push((-1, 1));
 
         
-        c.speed.temp.push((1, 1));
-        c.speed.temp.push((-1, 1));
-        c.speed.temp.push((2, 1));
-        c.speed.temp.push((-3, 1));
-        c.speed.temp.push((-4, 1));
+        // c.speed.temp.push((1, 1));
+        // c.speed.temp.push((-1, 1));
+        // c.speed.temp.push((2, 1));
+        // c.speed.temp.push((-3, 1));
+        // c.speed.temp.push((-4, 1));
 
         c
     }
