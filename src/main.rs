@@ -4,8 +4,6 @@
 mod commands;
 mod utils;
 
-
-
 use clap::{AppSettings, Parser};
 
 #[derive(Parser)]

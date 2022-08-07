@@ -22,13 +22,14 @@ pub struct Init {
 }
 
 
-fn create(init: &Init) -> Result<(), String> {
-
+fn create(init: &Init) -> Result<bool, String> {
+    let mut destroyed = false;
     if check_root()? { // found existing
         if init.force || init.reset { // --force or --reset flag set 
             warnln!("Found existing {0}. Cleaning...", ROOT_FOLDER_NAME);
             remove_dir_all(ROOT_FOLDER_NAME).unwrap();
             warnln!("Deleted {}", ROOT_FOLDER_NAME);
+            destroyed = true;
         } else { // return err
             return Err(format!("{} already exists", ROOT_FOLDER_NAME));
         }
@@ -49,7 +50,7 @@ fn create(init: &Init) -> Result<(), String> {
     infoln!("Created {}", META_FILE_NAME);
 
 
-    Ok(())
+    Ok(destroyed)
 }
 
 
@@ -90,9 +91,13 @@ pub fn process_init(init: &mut Init) {
     } else {
         infoln!("Initializing...");
         match create(&init) {
-            Ok(_) => {
+            Ok(destroyed) => {
                 infoln!("{}", "Init succeeded.");
-                println!("{}", "A dungeon has appeared!");
+                if destroyed {
+                    println!("{}", "The dungeon crumbles as a new one takes its place!");
+                } else {
+                    println!("{}", "A dungeon has appeared!");
+                }
             },
             Err(err) => {
                 errln!("{}", err);

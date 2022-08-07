@@ -51,9 +51,7 @@ macro_rules! warnln {
 
 pub fn print_logo() {
     
-    println!();
     include_str!("../../res/logo.txt").lines().for_each(|l| println!("{}", l));
-    println!();
 
 }
 

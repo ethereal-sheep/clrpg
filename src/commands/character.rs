@@ -43,16 +43,11 @@ fn create_new(new: &New) -> Result<String, String> {
     require_root()?;
     require_char()?;
 
-    let mut state = match RandomState::single_use() {
-        Ok(s) => s,
-        Err(err) => return Err(
-            format!("Error generating random state: {}", err.to_string())
-        )
-    };
+    let mut state = RandomState::single_use()?;
     
     let name = match &new.name {
         Some(s) => s.clone(),
-        None => state.generate_name()
+        None => state.generate_name()?
     };
 
     let id = state.generate_id();
