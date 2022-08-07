@@ -2,6 +2,7 @@ mod door;
 mod init;
 mod clean;
 mod character;
+mod status;
 
 
 use clap::Subcommand;
@@ -47,6 +48,6 @@ pub fn process_command(command: &mut Commands) {
         Commands::Clean => clean::process_clean(),
         Commands::Character(character) => character::process_character(&character),
         Commands::Logo => print_logo(),
-        Commands::Status => ()
+        Commands::Status => status::process_status()
     }
 }

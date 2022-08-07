@@ -18,7 +18,7 @@ struct Cli {
     command: commands::Commands,
     
     /// Verbose debug information
-    #[clap(short, long, action)]
+    #[clap(short, long, action, global = true)]
     verbose: bool
 
 }
@@ -30,6 +30,5 @@ fn main() {
 
     // use crate::utils::print::VERBOSE;
     // VERBOSE.with(|b| *b.borrow_mut() = cli.verbose);
-
     commands::process_command(&mut cli.command);
 }

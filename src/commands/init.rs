@@ -46,7 +46,7 @@ fn create(init: &Init) -> Result<bool, String> {
     infoln!("Seeding dungeon with seed={}", seed);
     infoln!("Created {}", RAND_FILE_NAME);
 
-    create_meta(Meta { seed })?;
+    create_meta(Meta::new(seed))?;
     infoln!("Created {}", META_FILE_NAME);
 
 

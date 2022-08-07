@@ -61,7 +61,7 @@ fn create_new(new: &New) -> Result<String, String> {
         );
     }
 
-    create_character(id.clone(), name.clone())?;
+    create_character(id.clone(), name.clone(), &mut state)?;
     infoln!("Created {}", name.yellow().bold());
     Ok(name)
 }

@@ -1,4 +1,4 @@
-use std::{path::Path, fs::{write, create_dir, remove_dir_all, read_to_string}, cell::RefCell};
+use std::{path::Path, fs::{write, create_dir, remove_dir_all, read_to_string}, cell::RefCell, fmt::Debug};
 use colored::Colorize;
 use rand::{prelude::*};
 use serde::{Deserialize, Serialize};
@@ -223,9 +223,37 @@ where
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum MetaStatus {
+    OutsideTheDungeon,
+    InTheDungeon,
+    InCombat
+}
+
+impl std::fmt::Display for MetaStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            MetaStatus::OutsideTheDungeon => write!(f, "{}", "Outside the dungeon".bold().green()),
+            MetaStatus::InTheDungeon => write!(f, "{}", "In the dungeon".bold().yellow()),
+            MetaStatus::InCombat => write!(f, "{}", "IN COMBAT".bold().red()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Meta {
     pub seed: u64,
-    
+    pub status: MetaStatus,
+    pub current: Option<String>,
+}
+
+impl Meta {
+    pub fn new(seed: u64) -> Self {
+        Self { 
+            seed, 
+            status: MetaStatus::OutsideTheDungeon,
+            current: None
+        }
+    }
 }
 
 /// Checks if meta file exists
@@ -328,6 +356,7 @@ impl RandomState {
         crate::errln!("Max retries for name generation exceeded!");
         Err("Unexpected error occured.".to_string())
     }
+
 
 }
 
@@ -465,21 +494,216 @@ impl std::fmt::Display for CharacterStatus {
     }
 }
 
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct HealthStat {
+    max: i32,
+    curr: i32,
+    temp: i32,
+}
+
+impl HealthStat {
+    fn new(max: i32) -> Self {
+        HealthStat { max, curr: max, temp: 0 }
+    }
+}
+
+impl std::fmt::Display for HealthStat {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        
+        let mut padding = String::new();
+        if let Some(width) = f.width() {
+            padding = String::with_capacity(width);
+            for _ in 0..width {
+                padding.push(' ');
+            }
+        }         
+        
+        const STEP: i32 = 5;
+        let mut red = String::new();
+        let mut blue = String::new();
+        let mut black = String::new();
+
+        let mut curr = 0;
+        while curr < self.curr {
+            red.push('♥');
+            curr += STEP;
+        }
+        while curr < self.curr + self.temp {
+            blue.push('♥');
+            curr += STEP;
+        }
+        
+        while curr < self.max {
+            black.push('♡');
+            curr += STEP;
+        }
+
+        
+        write!(f, 
+            "{padding}-----|  {}{}{}", 
+            red.red(), blue.cyan(), black.black()
+        )?;
+
+        if self.temp > 0 {
+            write!(f, "\n{padding}-----|  {:<3} /{} {}", 
+                (self.curr + self.temp).to_string().cyan().bold(), self.max,
+                format!("({}+{})", self.curr, self.temp).black()
+            )
+        } else {  
+            write!(f, 
+                "\n{padding}-----|  {:<3} /{}", 
+                self.curr, self.max
+            )
+        }
+
+
+        
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct RegStat {
+    max: i32,
+    temp: Vec<(i32, i32)>,
+}
+
+impl RegStat {
+    fn new(max: i32) -> Self {
+        RegStat { max, temp: vec![] }
+    }
+}
+
+impl std::fmt::Display for RegStat {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        
+        let mut padding = String::new();
+        if let Some(width) = f.width() {
+            padding = String::with_capacity(width);
+            for _ in 0..width {
+                padding.push(' ');
+            }
+        }         
+        
+        if self.temp.len() == 0 {
+            write!(f, "{padding}{:<3}", self.max)
+        } else {
+            let mut curr = self.max as i32;
+            let mut mods = curr.to_string();
+            for (modify, _) in &self.temp {
+                mods = format!("{}{:+}", mods, modify);
+                curr += modify;
+            }
+            if curr > self.max as i32 {
+                write!(f, "{padding}{:<3} {}", 
+                    curr.to_string().green(), 
+                    format!("({})", mods).black()
+                )
+            } else if curr < self.max as i32 {
+                write!(f, "{padding}{:<3} {}", 
+                    curr.to_string().red(), 
+                    format!("({})", mods).black()
+                )
+            } else {
+                write!(f, "{padding}{:<3} {}", 
+                    curr, 
+                    format!("({})", mods).black()
+                )
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct CharacterStats {
+    health: HealthStat, 
+    power: RegStat,
+    block: RegStat,
+    magic: RegStat,
+    faith: RegStat,
+    speed: RegStat
+}
+
+
+impl CharacterStats {
+    pub fn from_rng(rng: &mut RandomState) -> CharacterStats {
+        let mut c = CharacterStats {
+            health: HealthStat::new(100),
+            power: RegStat::new(rng.rng.gen_range(1..20)),
+            block: RegStat::new(rng.rng.gen_range(1..20)),
+            magic: RegStat::new(rng.rng.gen_range(1..20)),
+            faith: RegStat::new(rng.rng.gen_range(1..20)),
+            speed: RegStat::new(rng.rng.gen_range(1..20))
+        };
+
+        c.power.temp.push((2, 1));
+
+        c.magic.temp.push((-2, 1));
+
+        c.faith.temp.push((1, 1));
+        c.faith.temp.push((-1, 1));
+
+        
+        c.speed.temp.push((1, 1));
+        c.speed.temp.push((-1, 1));
+        c.speed.temp.push((2, 1));
+        c.speed.temp.push((-3, 1));
+        c.speed.temp.push((-4, 1));
+
+        c
+    }
+}
+
+
 #[derive(Debug, Clone, Deserialize, Serialize, Tabled)]
 pub struct CharacterObj {
     id: String,
     name: String,
     status: CharacterStatus,
     created: chrono::NaiveDateTime,
+
+    #[tabled(skip)]
+    stats: CharacterStats,
 }
 
-pub fn create_character(id: String, name: String) -> Result<(), String> {
+
+impl std::fmt::Display for CharacterObj {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        
+        let mut len = 0;
+        let mut padding = String::new();
+        if let Some(width) = f.width() {
+            len = width;
+            padding = String::with_capacity(width);
+            for _ in 0..width {
+                padding.push(' ');
+            }
+        } 
+
+        write!(f, "{padding}{} {} ({}) \n", self.status, self.name.bold(), self.id)?;
+                // write!(f, 
+        //     "{padding}Health: {} ({})\n",
+        //     health_to_hearts(self.health), self.health
+        // )?;
+        // write!(f, "{:>indent$}", self.stats, indent=padding.len())
+        
+        write!(f, "{:>indent$}\n", self.stats.health, indent=len)?;
+        write!(f, "{padding}POWER:  {}\n", self.stats.power)?;
+        write!(f, "{padding}BLOCK:  {}\n", self.stats.block)?;
+        write!(f, "{padding}MAGIC:  {}\n", self.stats.magic)?;
+        write!(f, "{padding}FAITH:  {}\n", self.stats.faith)?;
+        write!(f, "{padding}SPEED:  {}\n", self.stats.speed)
+    }
+}
+
+pub fn create_character(id: String, name: String, rng: &mut RandomState) -> Result<(), String> {
     write_character(
         &CharacterObj{ 
             id,
             name,
             status: CharacterStatus::Alive,
             created: chrono::Local::now().naive_local(),
+            stats: CharacterStats::from_rng(rng)
         }
     )
 }
@@ -490,7 +714,14 @@ pub fn write_character(char: &CharacterObj) -> Result<(), String> {
 }
 
 
-pub fn load_character(path: &Path) -> Result<CharacterObj, String> {
+pub fn require_character(character: &str) -> Result<CharacterObj, String> {
+    let path = &format!("{}/{}", CHAR_FOLDER_NAME, character);
+    require_file(&path)
+}
+
+pub fn load_character<P>(path: &P) -> Result<CharacterObj, String> 
+where 
+    P: AsRef<Path> + Debug{
 
     match read_to_string(path) {
         Ok(json) => {
