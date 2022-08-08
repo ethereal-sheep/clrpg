@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use tabled::Tabled;
 
-use crate::infoln;
+use crate::{infoln, warnln};
 
 pub const ROOT_FOLDER_NAME: &str = ".dungeon";
 pub const CHAR_FOLDER_NAME: &str = ".dungeon/.characters";
@@ -222,8 +222,9 @@ where
 }
 
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MetaStatus {
+    HelpWanted,
     OutsideTheDungeon,
     InTheDungeon,
     InCombat
@@ -232,9 +233,24 @@ pub enum MetaStatus {
 impl std::fmt::Display for MetaStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            MetaStatus::OutsideTheDungeon => write!(f, "{}", "Outside the dungeon".bold().green()),
-            MetaStatus::InTheDungeon => write!(f, "{}", "In the dungeon".bold().yellow()),
-            MetaStatus::InCombat => write!(f, "{}", "IN COMBAT".bold().red()),
+            MetaStatus::HelpWanted => {
+                write!(f, "{}\n{}", 
+                    "* Help Wanted! *".yellow(),
+                    "Looking for capable adventurers to subdue the dungeon."
+                )
+            },
+            MetaStatus::OutsideTheDungeon => {
+                write!(f, "{}\n{}", 
+                    "Outside the dungeon".bold().green(),
+                    "Preparing for the dive..."
+                )
+            },
+            MetaStatus::InTheDungeon => {
+                write!(f, "{}", "In the dungeon".bold().yellow())
+            },
+            MetaStatus::InCombat => {
+                write!(f, "{}", "IN COMBAT".bold().red())
+            }, 
         }
     }
 }
@@ -479,17 +495,21 @@ pub fn check_character(name: &str) -> Result<bool, String> {
 }
 
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum CharacterStatus {
-    Alive,
-    Dead
+    Healthy,
 }
 
 impl std::fmt::Display for CharacterStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+
+        let mut len = 0;
+        if let Some(w) = f.width() {
+            len = w;
+        } 
+
         match *self {
-            CharacterStatus::Alive => write!(f, "{}", "ALIVE".green()),
-            CharacterStatus::Dead => write!(f, "{}", "DEAD".red()),
+            CharacterStatus::Healthy => write!(f, "{}{:indent$}", "HEALTHY".green(), "",indent=len.saturating_sub(7)),
         }
     }
 }
@@ -678,16 +698,16 @@ impl std::fmt::Display for CharacterObj {
             for _ in 0..width {
                 padding.push(' ');
             }
-        } 
+        }
 
-        write!(f, "{padding}{} {} ({}) \n", self.status, self.name.bold(), self.id)?;
+        write!(f, "{padding}{}   {} ({}) \n", self.get_life_string(), self.name.bold(), self.id)?;
                 // write!(f, 
         //     "{padding}Health: {} ({})\n",
         //     health_to_hearts(self.health), self.health
         // )?;
         // write!(f, "{:>indent$}", self.stats, indent=padding.len())
         
-        write!(f, "{:>indent$}\n", self.stats.health, indent=len)?;
+        write!(f, "{:indent$}\n", self.stats.health, indent=len)?;
         write!(f, "{padding}POWER:  {}\n", self.stats.power)?;
         write!(f, "{padding}BLOCK:  {}\n", self.stats.block)?;
         write!(f, "{padding}MAGIC:  {}\n", self.stats.magic)?;
@@ -696,12 +716,34 @@ impl std::fmt::Display for CharacterObj {
     }
 }
 
+impl CharacterObj {
+    pub fn get_life_string(&self) -> String {
+        let life = if self.is_alive() {
+            format!("{}", "ALIVE".green().bold())
+        } else {
+            format!(" {}", "DEAD".red().bold())
+        };
+
+        life
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn is_alive(&self) -> bool {
+        self.stats.health.curr > 0
+    }
+}
+
+
+
 pub fn create_character(id: String, name: String, rng: &mut RandomState) -> Result<(), String> {
     write_character(
         &CharacterObj{ 
             id,
             name,
-            status: CharacterStatus::Alive,
+            status: CharacterStatus::Healthy,
             created: chrono::Local::now().naive_local(),
             stats: CharacterStats::from_rng(rng)
         }
@@ -752,9 +794,10 @@ pub fn load_characters() -> Vec<CharacterObj> {
     if let Ok(entries) = std::fs::read_dir(CHAR_FOLDER_NAME) {
         for res in entries {
             if let Ok(entry) = res {
-                // silently ignore failures
-                if let Ok(obj) = load_character(&entry.path()) {
-                    characters.push(obj);
+                // report failures but do not fail
+                match load_character(&entry.path()) {
+                    Ok(obj) => characters.push(obj),
+                    Err(err) => warnln!("{}", err.to_string()),
                 }
             }
         }

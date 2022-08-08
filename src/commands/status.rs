@@ -1,4 +1,3 @@
-use crate::utils::print::print_logo;
 use crate::{errln, infoln};
 use crate::utils::common::*;
 
@@ -16,7 +15,7 @@ fn print_status() -> Result<(), String> {
 
     infoln!("{}", "Status succeeded.");
     // infoln!("{:?}", &meta);
-    println!("Seed: {}", meta.seed);
+    // println!("Seed: {}", meta.seed);
     println!("{}", meta.status);
 
     println!();
@@ -28,10 +27,10 @@ fn print_status() -> Result<(), String> {
         },
         None => {
             println!("{}", "No waiting adventurer".red());
-            // println!(
-            //     "   (use \"{} {}\" to wait an adventurer)", 
-            //     "clrpg".yellow(), "character wait <NAME>".black()
-            // );
+            println!(
+                "   (use \"{} {}\" to wait an adventurer)", 
+                "clrpg".yellow(), "character wait <NAME>".black()
+            );
         },
     }
 

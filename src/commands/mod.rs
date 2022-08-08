@@ -3,6 +3,7 @@ mod init;
 mod clean;
 mod character;
 mod status;
+mod run;
 
 
 use clap::Subcommand;
@@ -21,9 +22,14 @@ pub enum Commands {
     /// Alias for character list
     List(character::List),
 
-    
     /// Alias for character new
     Nc(character::New),
+    
+    /// Alias for character wait
+    Wait(character::Wait),
+
+    /// Run away!
+    Run,
 
     /// Show the current status
     Status,
@@ -45,9 +51,11 @@ pub fn process_command(command: &mut Commands) {
         Commands::Door(door) => door::process_door(&door),
         Commands::List(list) => character::process_list(&list),
         Commands::Nc(new) => character::process_new(&new),
+        Commands::Wait(wait) => character::process_wait(&wait),
         Commands::Clean => clean::process_clean(),
         Commands::Character(character) => character::process_character(&character),
         Commands::Logo => print_logo(),
-        Commands::Status => status::process_status()
+        Commands::Status => status::process_status(),
+        Commands::Run => run::process_run(),
     }
 }
